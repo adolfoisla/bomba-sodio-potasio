@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Simulador Fisiológico Na+/K+ ATPasa - UACh</title>
+    <script src="https://cjrtnc.leaningtech.com/3.0/loader.js"></script>
+    <style>
+        body { margin: 0; background: #f5f3ee; display: flex; flex-direction: column; align-items: center; font-family: sans-serif; }
+        #container { margin-top: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .footer { margin-top: 15px; color: #666; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <div class="footer">Desarrollado para la asignatura de Biología Celular - Universidad Austral de Chile</div>
+    
+    <script>
+        cheerpjInit();
+        // Usamos las dimensiones exactas de tu código Java
+        cheerpjCreateDisplay(1100, 720, document.getElementById("container"));
+        cheerpjRunJar("/app/simulador_bomba.jar");
+    </script>
+</body>
+</html>
