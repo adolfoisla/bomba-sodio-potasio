@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bomba Na⁺/K⁺ ATPasa — Simulación Interactiva</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f2ec;
+  --surface: #ffffff;
+  --border: #e0d9cc;
+  --text: #2a2620;
+  --muted: #7a7268;
+  --na: #d63e12;
+  --na-light: #fde8e2;
+  --na-dark: #8c2808;
+  --k: #107a56;
+  --k-light: #dcf5eb;
+  --k-dark: #064d34;
+  --atp: #d4920a;
+  --atp-light: #fef3d8;
+  --phos: #8b35a0;
+  --accent: #1a4fa0;
+  --accent-light: #e8f0fc;
+  --mem: #b89040;
+  --mem-dark: #7a5c1c;
+  --protein: #6b3d18;
+  --protein-lite: #9e6030;
+  --step1: #1a4fa0;
+  --step2: #107a56;
+  --step3: #d4920a;
+  --step4: #8b35a0;
+  --step5: #d63e12;
+  --step6: #2a7a8a;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+header {
+  background: #1a1810;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #3a3428;
+}
+header h1 {
+  font-size: 15px;
+  font-weight: 500;
+  color: #f0ebe0;
+  letter-spacing: 0.01em;
+}
+header .badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: #a09880;
+  background: #2e2a20;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid #4a4438;
+}
+
+/* ── LAYOUT ── */
+.app {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  grid-template-rows: 1fr auto;
+  height: calc(100vh - 49px);
+  min-height: 500px;
+}
+
+/* ── CANVAS AREA ── */
+.canvas-area {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Step card */
+.step-card {
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.step-number {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.step-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+.step-desc {
+  font-size: 11.5px;
+  color: #5a5448;
+  line-height: 1.6;
+}
+.state-badge {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-top: 8px;
+  background: var(--accent-light);
+  color: var(--accent);
+  border: 1px solid #c0d0f0;
+}
+
+/* Cycle diagram */
+.cycle-wrap {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.cycle-wrap h3 {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+#cycleSvg { width: 100%; height: 190px; }
+
+/* Controls */
+.controls {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.controls h3 {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+.btn-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+button {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+button:hover { background: var(--bg); border-color: #c0b8a8; }
+button:active { transform: scale(0.97); }
+button.primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+button.primary:hover { background: #163d88; }
+
+.speed-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.speed-row label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+input[type=range] {
+  flex: 1;
+  accent-color: var(--accent);
+  height: 4px;
+}
+
+.toggle-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.toggle-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.toggle-item input { accent-color: var(--accent); cursor: pointer; }
+.toggle-item span { font-size: 11px; color: var(--muted); }
+
+/* Legend */
+.legend {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.legend h3 {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+.legend-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 8px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: #5a5448;
+}
+.legend-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(0,0,0,0.15);
+}
+
+/* Stats */
+.stats {
+  padding: 12px 18px;
+}
+.stats h3 {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.stat-box {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+}
+.stat-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1;
+}
+.stat-lbl { font-size: 9px; color: var(--muted); margin-top: 2px; }
+
+/* Tooltip */
+#tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: #1a1810ee;
+  color: #f0ebe0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 11px;
+  line-height: 1.6;
+  max-width: 220px;
+  display: none;
+  z-index: 100;
+  border: 1px solid #4a4438;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+#tooltip strong { color: #f5d070; display: block; margin-bottom: 2px; font-size: 12px; }
+
+/* Status bar */
+.statusbar {
+  grid-column: 1 / -1;
+  background: #1a1810;
+  padding: 5px 20px;
+  font-size: 10.5px;
+  color: #706858;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border-top: 1px solid #3a3428;
+}
+.statusbar span { color: #a09880; }
+
+@media (max-width: 700px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: 60vh auto auto; }
+  .canvas-area { border-right: none; border-bottom: 1px solid var(--border); }
+  .sidebar { max-height: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ Bomba Na⁺/K⁺ ATPasa &mdash; Simulación Interactiva</h1>
+  <span class="badge">Mecanismo Post-Albers · Transporte Activo Primario</span>
+</header>
+
+<div class="app">
+  <!-- Canvas -->
+  <div class="canvas-area">
+    <canvas id="sim"></canvas>
+    <div id="tooltip"></div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <!-- Step info -->
+    <div class="step-card">
+      <div class="step-number" id="stepNum">Paso 1 de 6</div>
+      <div class="step-title" id="stepTitle">E1 — Conformación inward (citoplasma abierto)</div>
+      <div class="step-desc" id="stepDesc">Los sitios de unión de la proteína están abiertos hacia el citoplasma. La bomba está lista para capturar 3 iones Na⁺ del interior celular.</div>
+      <div class="state-badge" id="stateBadge">Estado: E1</div>
+    </div>
+
+    <!-- Cycle diagram -->
+    <div class="cycle-wrap">
+      <h3>Ciclo Post-Albers</h3>
+      <svg id="cycleSvg" viewBox="0 0 270 185"></svg>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <h3>Controles</h3>
+      <div class="btn-row">
+        <button id="btnPrev">◀ Anterior</button>
+        <button id="btnNext" class="primary">Siguiente ▶</button>
+        <button id="btnAuto">▶ Auto</button>
+        <button id="btnReset">↺ Reset</button>
+      </div>
+      <div class="speed-row">
+        <label>Velocidad</label>
+        <input type="range" id="speedSlider" min="1" max="5" value="2">
+      </div>
+      <div class="toggle-row">
+        <label class="toggle-item"><input type="checkbox" id="chkLabels" checked><span>Mostrar etiquetas de iones</span></label>
+        <label class="toggle-item"><input type="checkbox" id="chkGradient" checked><span>Mostrar gradiente de concentración</span></label>
+        <label class="toggle-item"><input type="checkbox" id="chkDomains"><span>Mostrar dominios proteicos (N/P/A)</span></label>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <h3>Leyenda</h3>
+      <div class="legend-grid">
+        <div class="legend-item"><div class="legend-dot" style="background:#d63e12"></div>Ion Na⁺</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#107a56"></div>Ion K⁺</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#d4920a"></div>ATP</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#e07840"></div>ADP</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#8b35a0"></div>Fosfato (~P)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#6b3d18"></div>Proteína</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#b89040"></div>Membrana</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4488cc"></div>Canal iónico</div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <h3>Estadísticas</h3>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-val" id="statCycles">0</div><div class="stat-lbl">Ciclos completos</div></div>
+        <div class="stat-box"><div class="stat-val" id="statNaOut">0</div><div class="stat-lbl">Na⁺ exportados</div></div>
+        <div class="stat-box"><div class="stat-val" id="statKIn">0</div><div class="stat-lbl">K⁺ importados</div></div>
+        <div class="stat-box"><div class="stat-val" id="statATP">0</div><div class="stat-lbl">ATP consumidos</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    Haz clic en la proteína para avanzar &nbsp;·&nbsp; Pasa el cursor sobre los elementos para más información &nbsp;·&nbsp;
+    <span id="hoverInfo">—</span>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// STEP DEFINITIONS (Post-Albers 6-step cycle)
+// ─────────────────────────────────────────────
+const STEPS = [
+  {
+    id: 'E1',
+    title: 'E1 — Conformación inward (citoplasma abierto)',
+    desc: 'Los sitios de unión están abiertos hacia el citoplasma (cara interna). La proteína se encuentra en estado E1: sin fosforilar. Lista para capturar 3 iones Na⁺ del citoplasma.',
+    badge: 'E1',
+    gateBot: 1, gateTop: 0, twist: 0,
+    phospho: 0, atpVis: 0, adpVis: 0, piVis: 0,
+    naInPump: true, kInPump: false,
+    color: '#1a4fa0'
+  },
+  {
+    id: 'E1·ATP',
+    title: 'E1·ATP — Unión de ATP y fosforilación',
+    desc: 'El ATP se une al dominio N de la subunidad α. El grupo γ-fosfato se transfiere al residuo Asp del dominio P (autofosforilación). Se forma el intermediario de alta energía E1~P·ADP.',
+    badge: 'E1·ATP → E1P',
+    gateBot: 0.3, gateTop: 0, twist: 0.3,
+    phospho: 1, atpVis: 1, adpVis: 0.8, piVis: 0,
+    naInPump: true, kInPump: false,
+    color: '#107a56'
+  },
+  {
+    id: 'E1P·(Na₃)',
+    title: 'E1P·(Na₃) — Na⁺ ocluido, ADP liberado',
+    desc: 'Los 3 Na⁺ quedan ocluidos (atrapados) dentro de la proteína. El ADP es liberado. El enlace fosfato de alta energía (~P) impulsa el cambio conformacional hacia E2P.',
+    badge: 'E1P·(Na₃)',
+    gateBot: 0, gateTop: 0.2, twist: 0.6,
+    phospho: 1, atpVis: 0, adpVis: 0, piVis: 0,
+    naInPump: true, kInPump: false,
+    color: '#d4920a'
+  },
+  {
+    id: 'E2P',
+    title: 'E2P — Apertura extracelular, liberación de Na⁺',
+    desc: 'Cambio conformacional a E2P: la cara extracelular se abre. Los 3 Na⁺ son liberados al espacio extracelular. Los 2 K⁺ extracelulares se unen a los sitios I y II. Este evento promueve la desfosforilación.',
+    badge: 'E2P',
+    gateBot: 0, gateTop: 1, twist: 1,
+    phospho: 0.5, atpVis: 0, adpVis: 0, piVis: 0,
+    naInPump: false, kInPump: true,
+    color: '#8b35a0'
+  },
+  {
+    id: 'E2·Pi',
+    title: 'E2·Pi — K⁺ ocluido, desfosforilación',
+    desc: 'Los 2 K⁺ quedan ocluidos. El fosfato inorgánico (Pi) es liberado por hidrólisis (desfosforilación del residuo Asp). La proteína transita de E2P a E2·Pi.',
+    badge: 'E2·Pi',
+    gateBot: 0, gateTop: 0.3, twist: 0.7,
+    phospho: 0, atpVis: 0, adpVis: 0, piVis: 1,
+    naInPump: false, kInPump: true,
+    color: '#d63e12'
+  },
+  {
+    id: 'E2(K₂)',
+    title: 'E2(K₂) — Liberación de K⁺, regreso a E1',
+    desc: 'El ATP (baja afinidad) se une y acelera la deoclusión de K⁺. Los 2 K⁺ son liberados al citoplasma. La bomba regresa a la conformación E1, completando el ciclo. Por cada ATP: 3 Na⁺ salen, 2 K⁺ entran.',
+    badge: 'E2(K₂) → E1',
+    gateBot: 1, gateTop: 0, twist: 0,
+    phospho: 0, atpVis: 0.4, adpVis: 0, piVis: 0,
+    naInPump: false, kInPump: false,
+    color: '#2a7a8a'
+  }
+];
+
+// ─────────────────────────────────────────────
+// SIMULATION STATE
+// ─────────────────────────────────────────────
+let canvas, ctx, W, H;
+let stepIdx = 0;
+let transitionT = 1; // 1 = at rest, 0..1 = transitioning
+let autoPlay = false;
+let autoDelay = 0;
+let autoDelayMax = 100;
+let cycles = 0, naOut = 0, kIn = 0, atpUsed = 0;
+let raf;
+
+// Protein position (centered)
+const PUMP_CX_FRAC = 0.45;
+const PUMP_W = 70;
+const MEM_THICK = 46; // half-thickness each side
+
+// Ion pools
+let extNa = [], extK = [], cytNa = [], cytK = [], boundIons = [];
+
+// Hover / tooltip
+let hoverEl = null;
+let mouseX = 0, mouseY = 0;
+
+// Visual state (interpolated)
+let vis = { gateBot:1, gateTop:0, twist:0, phospho:0, atpVis:0, adpVis:0, piVis:0 };
+let visTarget = { ...vis };
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+function init() {
+  canvas = document.getElementById('sim');
+  ctx = canvas.getContext('2d');
+  resize();
+  window.addEventListener('resize', resize);
+
+  spawnIons();
+  bindUI();
+  updateSidebar();
+  drawCycle();
+
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('mouseleave', () => { hoverEl = null; document.getElementById('hoverInfo').textContent = '—'; });
+  canvas.addEventListener('click', onClick);
+
+  loop();
+}
+
+function resize() {
+  const area = canvas.parentElement;
+  W = area.clientWidth;
+  H = area.clientHeight;
+  canvas.width = W * devicePixelRatio;
+  canvas.height = H * devicePixelRatio;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+}
+
+function memTop()    { return H * 0.42; }
+function memBot()    { return H * 0.42 + MEM_THICK * 2; }
+function memMid()    { return H * 0.42 + MEM_THICK; }
+function pumpCX()    { return W * PUMP_CX_FRAC; }
+
+function spawnIons() {
+  const cx = pumpCX(), pw = PUMP_W;
+  const mt = memTop(), mb = memBot();
+
+  extNa = []; extK = []; cytNa = []; cytK = []; boundIons = [];
+
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const rvec = () => ({ vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5 });
+
+  // Extracellular: many Na+, few K+
+  for (let i=0;i<12;i++) {
+    const side = i < 7 ? rnd(30, cx-pw-25) : rnd(cx+pw+25, W-60);
+    extNa.push({ x:side, y:rnd(20, mt-15), ...rvec(), r:9, bound:false });
+  }
+  for (let i=0;i<5;i++) {
+    const side = i < 3 ? rnd(40, cx-pw-30) : rnd(cx+pw+30, W-70);
+    extK.push({ x:side, y:rnd(25, mt-15), ...rvec(), r:9, bound:false });
+  }
+  // Cytoplasm: many K+, few Na+
+  for (let i=0;i<12;i++) {
+    const side = i < 7 ? rnd(30, cx-pw-25) : rnd(cx+pw+25, W-60);
+    cytK.push({ x:side, y:rnd(mb+15, mb+H*0.38), ...rvec(), r:9, bound:false });
+  }
+  for (let i=0;i<5;i++) {
+    const side = i < 3 ? rnd(40, cx-pw-30) : rnd(cx+pw+30, W-70);
+    cytNa.push({ x:side, y:rnd(mb+15, mb+H*0.38), ...rvec(), r:9, bound:false });
+  }
+
+  // Pre-bind 3 Na+ (E1 state)
+  const naSlots = [[-18,8],[0,-2],[18,8]];
+  for (let i=0;i<3;i++) {
+    boundIons.push({ x: pumpCX()+naSlots[i][0], y: memMid()+naSlots[i][1],
+      vx:0, vy:0, r:9, bound:true, isNa:true, slot:i });
+  }
+}
+
+// ─────────────────────────────────────────────
+// MAIN LOOP
+// ─────────────────────────────────────────────
+function loop() {
+  update();
+  render();
+  raf = requestAnimationFrame(loop);
+}
+
+function easeInOut(t) { return t<0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+function lerpColor(a, b, t) {
+  const pc = (h) => parseInt(h.slice(1), 16);
+  const ra = (pc(a) >> 16) & 255, ga = (pc(a) >> 8) & 255, ba = pc(a) & 255;
+  const rb = (pc(b) >> 16) & 255, gb = (pc(b) >> 8) & 255, bb = pc(b) & 255;
+  return `rgb(${Math.round(ra+(rb-ra)*t)},${Math.round(ga+(gb-ga)*t)},${Math.round(ba+(bb-ba)*t)})`;
+}
+
+function update() {
+  // Lerp visuals
+  const speed = 0.04;
+  for (const k of Object.keys(vis)) {
+    vis[k] += (visTarget[k] - vis[k]) * speed * 3;
+  }
+
+  // Wander background ions
+  const cx = pumpCX(), pw = PUMP_W;
+  const mt = memTop(), mb = memBot();
+
+  function wanderIon(ion, minX, maxX, minY, maxY) {
+    if (ion.bound) return;
+    ion.x += ion.vx; ion.y += ion.vy;
+    if (ion.x < minX || ion.x > maxX) { ion.vx *= -1; ion.x = Math.max(minX, Math.min(maxX, ion.x)); }
+    if (ion.y < minY || ion.y > maxY) { ion.vy *= -1; ion.y = Math.max(minY, Math.min(maxY, ion.y)); }
+    // Slight random drift
+    if (Math.random() < 0.02) { ion.vx += (Math.random()-0.5)*0.3; ion.vy += (Math.random()-0.5)*0.3; }
+    const spd = Math.hypot(ion.vx, ion.vy);
+    if (spd > 0.8) { ion.vx /= spd * 1.25; ion.vy /= spd * 1.25; }
+  }
+
+  for (const ion of extNa) wanderIon(ion, 20, cx-pw-20, 15, mt-8);
+  for (const ion of extK)  wanderIon(ion, 20, cx-pw-20, 15, mt-8);
+  for (const ion of cytNa) wanderIon(ion, 20, cx-pw-20, mb+8, mb+H*0.38);
+  for (const ion of cytK)  wanderIon(ion, 20, cx-pw-20, mb+8, mb+H*0.38);
+
+  // Move bound ions toward slots
+  const naSlots = [[-18,8],[0,-2],[18,8]];
+  const kSlots  = [[-12,-10],[12,-10]];
+  for (const ion of boundIons) {
+    const slot = ion.isNa ? naSlots[ion.slot] : kSlots[ion.slot];
+    const tx = pumpCX() + slot[0], ty = memMid() + slot[1];
+    ion.x += (tx - ion.x) * 0.12;
+    ion.y += (ty - ion.y) * 0.12;
+  }
+
+  // Auto play
+  if (autoPlay) {
+    autoDelay++;
+    if (autoDelay >= autoDelayMax) {
+      autoDelay = 0;
+      advanceStep();
+    }
+  }
+}
+
+// ─────────────────────────────────────────────
+// STEP LOGIC
+// ─────────────────────────────────────────────
+function advanceStep() {
+  const prev = stepIdx;
+  stepIdx = (stepIdx + 1) % STEPS.length;
+  applyStepEnd(prev, stepIdx);
+  setVisTarget(STEPS[stepIdx]);
+  updateSidebar();
+  drawCycle();
+}
+
+function goBack() {
+  const prev = stepIdx;
+  stepIdx = (stepIdx + STEPS.length - 1) % STEPS.length;
+  setVisTarget(STEPS[stepIdx]);
+  updateSidebar();
+  drawCycle();
+}
+
+function setVisTarget(s) {
+  visTarget.gateBot  = s.gateBot;
+  visTarget.gateTop  = s.gateTop;
+  visTarget.twist    = s.twist;
+  visTarget.phospho  = s.phospho;
+  visTarget.atpVis   = s.atpVis;
+  visTarget.adpVis   = s.adpVis;
+  visTarget.piVis    = s.piVis;
+}
+
+function applyStepEnd(from, to) {
+  const fromStep = STEPS[from];
+  const toStep   = STEPS[to];
+
+  // Going forward: E1P_NA3 (idx 2) → E2P (idx 3): release Na+, bind K+
+  if (from === 2 && to === 3) {
+    // Release bound Na+ to extracellular
+    for (const ion of [...boundIons]) {
+      if (ion.isNa) {
+        ion.bound = false; ion.vx = (Math.random()-0.5)*1; ion.vy = -0.8;
+        extNa.push(ion);
+      }
+    }
+    boundIons = boundIons.filter(i => !i.isNa);
+    // Bind 2 K+ from extracellular pool (or create)
+    const kSlots = [[-12,-10],[12,-10]];
+    for (let i=0;i<2;i++) {
+      let src = extK.find(k => !k.bound);
+      if (!src) src = { x: pumpCX(), y: memTop()-20, vx:0, vy:0, r:9 };
+      else extK = extK.filter(k => k !== src);
+      src.bound = true; src.isNa = false; src.slot = i;
+      boundIons.push(src);
+    }
+  }
+
+  // E2_K2 (idx 5) → E1 (idx 0): release K+ to cytoplasm, bind 3 Na+
+  if (from === 5 && to === 0) {
+    cycles++; naOut += 3; kIn += 2; atpUsed++;
+    document.getElementById('statCycles').textContent = cycles;
+    document.getElementById('statNaOut').textContent = naOut;
+    document.getElementById('statKIn').textContent = kIn;
+    document.getElementById('statATP').textContent = atpUsed;
+
+    // Release K+ to cytoplasm
+    for (const ion of [...boundIons]) {
+      if (!ion.isNa) {
+        ion.bound = false; ion.vx = (Math.random()-0.5)*0.8; ion.vy = 0.8;
+        cytK.push(ion);
+      }
+    }
+    boundIons = boundIons.filter(i => i.isNa);
+
+    // Bind 3 Na+ from cytoplasm
+    const naSlots = [[-18,8],[0,-2],[18,8]];
+    for (let i=0;i<3;i++) {
+      let src = cytNa.find(n => !n.bound);
+      if (!src) src = { x: pumpCX(), y: memBot()+20, vx:0, vy:0, r:9 };
+      else cytNa = cytNa.filter(n => n !== src);
+      src.bound = true; src.isNa = true; src.slot = i;
+      boundIons.push(src);
+    }
+  }
+}
+
+// ─────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────
+function render() {
+  ctx.clearRect(0, 0, W, H);
+
+  const mt = memTop(), mb = memBot(), mc = memMid(), cx = pumpCX(), pw = PUMP_W;
+
+  // Region backgrounds
+  ctx.fillStyle = '#e8f0fc';
+  ctx.fillRect(0, 0, W, mt);
+  ctx.fillStyle = '#e2f5ea';
+  ctx.fillRect(0, mb, W, H - mb);
+  ctx.fillStyle = '#f5f2ec';
+  ctx.fillRect(0, mt, W, mb - mt);
+
+  drawMembrane(mt, mb, mc, cx, pw);
+  if (document.getElementById('chkDomains').checked) drawDomains(mt, mb, cx, pw);
+  drawProtein(mt, mb, mc, cx, pw);
+  drawIons();
+  drawATPADP(mc, cx, pw, mb);
+  if (document.getElementById('chkGradient').checked) drawGradient(mt, mb);
+  drawLabels(mt, mb, cx, pw);
+}
+
+function drawMembrane(mt, mb, mc, cx, pw) {
+  // Outer leaflet
+  ctx.fillStyle = '#c8a050';
+  ctx.fillRect(0, mt, W, 26);
+  ctx.fillRect(0, mb - 26, W, 26);
+  // Hydrophobic core
+  ctx.fillStyle = 'rgba(210,178,100,0.35)';
+  ctx.fillRect(0, mt + 26, W, mb - mt - 52);
+
+  // Phospholipid heads
+  for (let x = 18; x < W; x += 18) {
+    if (Math.abs(x - cx) > pw + 18) {
+      ctx.fillStyle = '#7a5018';
+      ctx.beginPath(); ctx.arc(x, mt + 9, 6, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#5a3808'; ctx.lineWidth = 0.8;
+      ctx.stroke();
+      // tails
+      ctx.strokeStyle = '#a07830'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(x-2, mt+15); ctx.lineTo(x-4, mt+22); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+2, mt+15); ctx.lineTo(x+4, mt+22); ctx.stroke();
+
+      ctx.fillStyle = '#7a5018';
+      ctx.beginPath(); ctx.arc(x, mb - 9, 6, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#5a3808'; ctx.lineWidth = 0.8; ctx.stroke();
+      ctx.strokeStyle = '#a07830'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(x-2, mb-15); ctx.lineTo(x-4, mb-22); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+2, mb-15); ctx.lineTo(x+4, mb-22); ctx.stroke();
+    }
+  }
+}
+
+function drawDomains(mt, mb, cx, pw) {
+  const alpha = 0.12;
+  // Domain N (nucleotide) — top cytoplasmic loop
+  ctx.fillStyle = `rgba(30,80,190,${alpha})`;
+  roundRect(ctx, cx - 28, mt - 72, 80, 52, 8); ctx.fill();
+  ctx.fillStyle = '#1a4fa0';
+  ctx.font = '500 9px DM Sans';
+  ctx.fillText('Dom. N', cx - 18, mt - 25);
+  ctx.fillStyle = 'rgba(80,80,80,0.6)';
+  ctx.font = '9px DM Sans';
+  ctx.fillText('(nucleótido)', cx - 24, mt - 14);
+
+  // Domain P (phosphorylation) — transmembrane
+  ctx.fillStyle = `rgba(180,60,40,${alpha})`;
+  roundRect(ctx, cx - 24, mc - 28, 72, 56, 8); ctx.fill();
+  ctx.fillStyle = '#b03020';
+  ctx.font = '500 9px DM Sans';
+  ctx.fillText('Dom. P', cx - 14, mc - 6);
+  ctx.fillStyle = 'rgba(80,80,80,0.6)';
+  ctx.font = '9px DM Sans';
+  ctx.fillText('(fosforilación)', cx - 30, mc + 6);
+
+  // Domain A (actuator) — bottom
+  ctx.fillStyle = `rgba(20,130,80,${alpha})`;
+  roundRect(ctx, cx - 36, mb + 4, 80, 36, 8); ctx.fill();
+  ctx.fillStyle = '#107a56';
+  ctx.font = '500 9px DM Sans';
+  ctx.fillText('Dom. A', cx - 18, mb + 20);
+  ctx.fillStyle = 'rgba(80,80,80,0.6)';
+  ctx.font = '9px DM Sans';
+  ctx.fillText('(actuador)', cx - 20, mb + 32);
+}
+
+function drawProtein(mt, mb, mc, cx, pw) {
+  const ptop = mt - 40, pbot = mb + 40;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.beginPath();
+  ctx.ellipse(cx + 4, mc + 4, pw + 12, (pbot-ptop)/2 + 4, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Body
+  ctx.fillStyle = '#6b3d18';
+  ctx.beginPath();
+  ctx.moveTo(cx - pw, ptop);
+  ctx.lineTo(cx + pw, ptop);
+  ctx.lineTo(cx + pw + 14, mt + 8);
+  ctx.lineTo(cx + pw + 14, mb - 8);
+  ctx.lineTo(cx + pw, pbot);
+  ctx.lineTo(cx - pw, pbot);
+  ctx.lineTo(cx - pw - 14, mb - 8);
+  ctx.lineTo(cx - pw - 14, mt + 8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#4a2408'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // Inner highlight
+  ctx.fillStyle = '#9e6030';
+  ctx.beginPath();
+  ctx.ellipse(cx, mc, pw - 10, (pbot-ptop)/2 - 12, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = '#6b3d18';
+  ctx.beginPath();
+  ctx.ellipse(cx, mc, pw - 18, (pbot-ptop)/2 - 22, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Channel pore
+  const squeeze = 1 - 0.28 * Math.abs(Math.sin(vis.twist * Math.PI));
+  const poreW = 30 * squeeze;
+  ctx.fillStyle = '#4488cc';
+  ctx.beginPath();
+  ctx.ellipse(cx, mc, poreW, 22, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle = '#2266aa'; ctx.lineWidth = 1; ctx.stroke();
+
+  // TOP GATE (extracellular) 
+  const topGap = vis.gateTop * 22;
+  ctx.strokeStyle = '#3a1a08'; ctx.lineWidth = 3.5;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(cx - pw + 12, ptop + 8); ctx.lineTo(cx - 8, ptop + 8 - topGap); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx + pw - 12, ptop + 8); ctx.lineTo(cx + 8, ptop + 8 - topGap); ctx.stroke();
+
+  // BOTTOM GATE (cytoplasmic)
+  const botGap = vis.gateBot * 22;
+  ctx.beginPath(); ctx.moveTo(cx - pw + 12, pbot - 8); ctx.lineTo(cx - 8, pbot - 8 + botGap); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx + pw - 12, pbot - 8); ctx.lineTo(cx + 8, pbot - 8 + botGap); ctx.stroke();
+  ctx.lineCap = 'butt'; ctx.lineWidth = 1;
+
+  // Phosphorylation site glow
+  if (vis.phospho > 0.05) {
+    const a = Math.min(vis.phospho, 1);
+    const r = 12 * a;
+    const grad = ctx.createRadialGradient(cx + pw - 5, mc, 0, cx + pw - 5, mc, r + 8);
+    grad.addColorStop(0, `rgba(150,50,180,${0.9*a})`);
+    grad.addColorStop(1, `rgba(150,50,180,0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx + pw - 5, mc, r + 8, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = `rgba(180,80,210,${a})`;
+    ctx.beginPath(); ctx.arc(cx + pw - 5, mc, r, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = `rgba(255,255,255,${a*0.9})`;
+    ctx.font = `bold ${Math.round(8*a+6)}px DM Mono`;
+    ctx.textAlign = 'center';
+    ctx.fillText('~P', cx + pw - 5, mc + 4);
+    ctx.textAlign = 'left';
+  }
+
+  // State label
+  const s = STEPS[stepIdx];
+  ctx.font = 'bold 11px DM Mono';
+  ctx.textAlign = 'center';
+  const lw = ctx.measureText(s.id).width;
+  ctx.fillStyle = 'rgba(255,255,255,0.88)';
+  roundRect(ctx, cx - lw/2 - 7, mc - 46, lw + 14, 20, 5); ctx.fill();
+  ctx.fillStyle = '#3a1870';
+  ctx.fillText(s.id, cx, mc - 31);
+  ctx.textAlign = 'left';
+}
+
+function drawIons() {
+  const showLbls = document.getElementById('chkLabels').checked;
+  for (const ion of [...extNa, ...extK, ...cytNa, ...cytK]) drawIon(ion, showLbls, false);
+  for (const ion of boundIons) drawIon(ion, showLbls, true);
+}
+
+function drawIon(ion, showLabel, bound) {
+  const fill = ion.isNa ? '#d63e12' : '#107a56';
+  const dark = ion.isNa ? '#8c2808' : '#064d34';
+  const label = ion.isNa ? 'Na⁺' : 'K⁺';
+  const r = ion.r;
+
+  if (bound) {
+    ctx.fillStyle = ion.isNa ? 'rgba(214,62,18,0.25)' : 'rgba(16,122,86,0.25)';
+    ctx.beginPath(); ctx.arc(ion.x, ion.y, r + 6, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Circle
+  ctx.fillStyle = fill;
+  ctx.beginPath(); ctx.arc(ion.x, ion.y, r, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = dark; ctx.lineWidth = 1.2; ctx.stroke();
+
+  // Highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.beginPath(); ctx.arc(ion.x - r*0.3, ion.y - r*0.3, r*0.45, 0, Math.PI*2); ctx.fill();
+
+  // Label
+  if (showLabel) {
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.font = 'bold 8px DM Sans';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, ion.x, ion.y + 3);
+    ctx.textAlign = 'left';
+  }
+  ctx.lineWidth = 1;
+}
+
+function drawATPADP(mc, cx, pw, mb) {
+  const ax = cx - pw - 65, ay = mb + 50;
+
+  // ATP
+  if (vis.atpVis > 0.04) {
+    const a = Math.min(vis.atpVis, 1);
+    ctx.fillStyle = `rgba(212,146,10,${0.9*a})`;
+    ctx.beginPath(); ctx.ellipse(ax, ay, 26, 14, 0, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = `rgba(170,100,8,${a})`; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = `rgba(60,30,0,${a})`;
+    ctx.font = 'bold 12px DM Sans'; ctx.textAlign = 'center';
+    ctx.fillText('ATP', ax, ay + 4); ctx.textAlign = 'left';
+    // Arrow to protein
+    ctx.strokeStyle = `rgba(170,100,8,${a*0.7})`; ctx.lineWidth = 1.5;
+    ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.moveTo(ax + 26, ay - 4); ctx.lineTo(cx - pw - 2, mb + 12); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineWidth = 1;
+  }
+
+  // ADP
+  if (vis.adpVis > 0.04) {
+    const a = Math.min(vis.adpVis, 1);
+    const ox = ax + 38 * (1-a), oy = ay - 28 * (1-a);
+    ctx.fillStyle = `rgba(224,120,64,${0.88*a})`;
+    ctx.beginPath(); ctx.ellipse(ox, oy, 24, 13, 0, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = `rgba(160,70,20,${a})`; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.fillStyle = `rgba(80,30,8,${a})`;
+    ctx.font = 'bold 11px DM Sans'; ctx.textAlign = 'center';
+    ctx.fillText('ADP', ox, oy + 4); ctx.textAlign = 'left';
+    ctx.lineWidth = 1;
+  }
+
+  // Pi
+  if (vis.piVis > 0.04) {
+    const a = Math.min(vis.piVis, 1);
+    const px = cx + pw + 50, py = mb + 48;
+    const grad = ctx.createRadialGradient(px, py, 0, px, py, 16);
+    grad.addColorStop(0, `rgba(160,70,200,${a})`);
+    grad.addColorStop(1, `rgba(160,70,200,0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(px, py, 20, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = `rgba(139,53,160,${0.9*a})`;
+    ctx.beginPath(); ctx.arc(px, py, 13, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = `rgba(100,20,120,${a})`; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = `rgba(255,255,255,${a*0.95})`;
+    ctx.font = 'bold 10px DM Sans'; ctx.textAlign = 'center';
+    ctx.fillText('Pi', px, py + 4); ctx.textAlign = 'left';
+    ctx.lineWidth = 1;
+  }
+}
+
+function drawGradient(mt, mb) {
+  const gx = W - 72, gw = 52;
+
+  function gradBar(y1, y2, hiColor, loColor, label, hiTop) {
+    for (let i = 0; i < y2 - y1; i++) {
+      const frac = i / (y2 - y1);
+      const t = hiTop ? (1 - frac) : frac;
+      const r1 = parseInt(hiColor.slice(1,3),16), g1 = parseInt(hiColor.slice(3,5),16), b1 = parseInt(hiColor.slice(5,7),16);
+      const r2 = parseInt(loColor.slice(1,3),16), g2 = parseInt(loColor.slice(3,5),16), b2 = parseInt(loColor.slice(5,7),16);
+      ctx.fillStyle = `rgba(${Math.round(r1+(r2-r1)*(1-t))},${Math.round(g1+(g2-g1)*(1-t))},${Math.round(b1+(b2-b1)*(1-t))},0.85)`;
+      ctx.fillRect(gx, y1 + i, gw, 1);
+    }
+    ctx.strokeStyle = 'rgba(160,150,130,0.5)'; ctx.lineWidth = 0.5;
+    ctx.strokeRect(gx, y1, gw, y2 - y1);
+    ctx.fillStyle = hiTop ? '#c03010' : '#0a6040';
+    ctx.font = 'bold 9px DM Sans';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, gx + gw/2, hiTop ? y1 + 13 : y2 - 4);
+    ctx.fillStyle = 'rgba(80,70,55,0.8)';
+    ctx.font = '8px DM Sans';
+    ctx.fillText('alta', gx + gw/2, hiTop ? y1 + 24 : y1 + 12);
+    ctx.fillText('baja', gx + gw/2, hiTop ? y2 - 5 : y2 - 14);
+    ctx.textAlign = 'left';
+  }
+
+  gradBar(22, mt - 8, '#d63e12', '#fde8e2', 'Na⁺', true);
+  gradBar(mb + 10, mb + H*0.38, '#107a56', '#dcf5eb', 'K⁺', false);
+
+  // ΔΨ label
+  ctx.fillStyle = 'rgba(30,60,130,0.7)';
+  ctx.font = '500 9px DM Mono';
+  ctx.textAlign = 'center';
+  ctx.fillText('ΔΨ≈−70mV', gx + gw/2, (mt + mb)/2 + 4);
+  ctx.textAlign = 'left';
+}
+
+function drawLabels(mt, mb, cx, pw) {
+  ctx.font = '500 12px DM Sans';
+  ctx.fillStyle = 'rgba(24,72,155,0.85)';
+  ctx.fillText('Espacio extracelular  ·  [Na⁺]↑  [K⁺]↓', 14, 22);
+  ctx.fillStyle = 'rgba(8,95,55,0.85)';
+  ctx.fillText('Citoplasma  ·  [Na⁺]↓  [K⁺]↑', 14, mb + 22);
+
+  // Arrows + ratio
+  ctx.font = '11px DM Sans';
+  ctx.fillStyle = 'rgba(200,50,10,0.8)';
+  ctx.fillText('3 Na⁺ →', cx - 80, mt - 52);
+  ctx.fillStyle = 'rgba(10,110,65,0.8)';
+  ctx.fillText('← 2 K⁺', cx + 16, mt - 52);
+
+  ctx.strokeStyle = 'rgba(200,50,10,0.6)'; ctx.lineWidth = 1.5;
+  ctx.setLineDash([3,2]);
+  arrowLine(ctx, cx - 38, mt - 46, cx - 38, mt - 14);
+  ctx.strokeStyle = 'rgba(10,110,65,0.6)';
+  arrowLine(ctx, cx + 28, mt - 14, cx + 28, mt - 46);
+  ctx.setLineDash([]); ctx.lineWidth = 1;
+
+  // ATP info
+  ctx.font = '10px DM Sans';
+  ctx.fillStyle = 'rgba(140,90,10,0.7)';
+  ctx.fillText('1 ATP / ciclo', cx - pw - 75, mb + 75);
+}
+
+function arrowLine(ctx, x1, y1, x2, y2) {
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  const ang = Math.atan2(y2-y1, x2-x1);
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - 7*Math.cos(ang-0.4), y2 - 7*Math.sin(ang-0.4));
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - 7*Math.cos(ang+0.4), y2 - 7*Math.sin(ang+0.4));
+  ctx.stroke();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
+  ctx.arcTo(x+w, y, x+w, y+r, r); ctx.lineTo(x+w, y+h-r);
+  ctx.arcTo(x+w, y+h, x+w-r, y+h, r); ctx.lineTo(x+r, y+h);
+  ctx.arcTo(x, y+h, x, y+h-r, r); ctx.lineTo(x, y+r);
+  ctx.arcTo(x, y, x+r, y, r); ctx.closePath();
+}
+
+// ─────────────────────────────────────────────
+// CYCLE SVG DIAGRAM
+// ─────────────────────────────────────────────
+function drawCycle() {
+  const svg = document.getElementById('cycleSvg');
+  const n = STEPS.length;
+  const cx = 135, cy = 98, r = 68;
+  let html = '';
+
+  // Ring
+  html += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e0d8c8" stroke-width="1.5" stroke-dasharray="6 4"/>`;
+
+  // Clockwise arrow on ring
+  const ang = -0.2;
+  const ax = cx + r * Math.cos(ang), ay = cy + r * Math.sin(ang);
+  html += `<path d="M${ax.toFixed(1)},${ay.toFixed(1)} l5,-7 l6,3" fill="none" stroke="#b0a890" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+  for (let i = 0; i < n; i++) {
+    const angle = 2 * Math.PI * i / n - Math.PI / 2;
+    const bx = cx + r * Math.cos(angle);
+    const by = cy + r * Math.sin(angle);
+    const active = i === stepIdx;
+    const col = STEPS[i].color;
+    const nr = active ? 18 : 13;
+
+    if (active) {
+      html += `<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="${nr+6}" fill="${col}" opacity="0.15"/>`;
+    }
+    html += `<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="${nr}" fill="${col}" opacity="${active?1:0.55}" stroke="${col}" stroke-width="${active?2:0}"/>`;
+    html += `<text x="${bx.toFixed(1)}" y="${(by+4).toFixed(1)}" text-anchor="middle" fill="white" font-size="${active?11:9}" font-weight="600" font-family="DM Mono">${i+1}</text>`;
+
+    // Short state name
+    const label = STEPS[i].id;
+    const lx = bx + Math.cos(angle) * (nr + 14);
+    const ly = by + Math.sin(angle) * (nr + 14) + 3;
+    html += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" fill="${active ? col : '#8a8070'}" font-size="${active?8:7}" font-weight="${active?700:400}" font-family="DM Mono">${label}</text>`;
+  }
+
+  // Center label
+  html += `<text x="${cx}" y="${cy-4}" text-anchor="middle" fill="#6a6050" font-size="8" font-family="DM Sans">Post-Albers</text>`;
+  html += `<text x="${cx}" y="${cy+8}" text-anchor="middle" fill="#6a6050" font-size="8" font-family="DM Sans">Cycle</text>`;
+
+  svg.innerHTML = html;
+}
+
+// ─────────────────────────────────────────────
+// SIDEBAR + UI
+// ─────────────────────────────────────────────
+function updateSidebar() {
+  const s = STEPS[stepIdx];
+  document.getElementById('stepNum').textContent = `Paso ${stepIdx+1} de ${STEPS.length}`;
+  document.getElementById('stepTitle').textContent = s.title;
+  document.getElementById('stepTitle').style.color = s.color;
+  document.getElementById('stepDesc').textContent = s.desc;
+  document.getElementById('stateBadge').textContent = `Estado: ${s.badge}`;
+  document.getElementById('stateBadge').style.color = s.color;
+  document.getElementById('stateBadge').style.background = s.color + '18';
+  document.getElementById('stateBadge').style.borderColor = s.color + '40';
+}
+
+function bindUI() {
+  document.getElementById('btnNext').onclick = () => advanceStep();
+  document.getElementById('btnPrev').onclick = () => goBack();
+  document.getElementById('btnAuto').onclick = () => {
+    autoPlay = !autoPlay;
+    document.getElementById('btnAuto').textContent = autoPlay ? '⏸ Pausa' : '▶ Auto';
+    document.getElementById('btnAuto').className = autoPlay ? 'primary' : '';
+  };
+  document.getElementById('btnReset').onclick = () => {
+    autoPlay = false;
+    document.getElementById('btnAuto').textContent = '▶ Auto';
+    document.getElementById('btnAuto').className = '';
+    stepIdx = 0;
+    cycles = 0; naOut = 0; kIn = 0; atpUsed = 0;
+    document.getElementById('statCycles').textContent = 0;
+    document.getElementById('statNaOut').textContent = 0;
+    document.getElementById('statKIn').textContent = 0;
+    document.getElementById('statATP').textContent = 0;
+    vis = { gateBot:1, gateTop:0, twist:0, phospho:0, atpVis:0, adpVis:0, piVis:0 };
+    visTarget = { ...vis };
+    spawnIons();
+    updateSidebar();
+    drawCycle();
+  };
+  document.getElementById('speedSlider').oninput = (e) => {
+    autoDelayMax = Math.round(140 / parseInt(e.target.value));
+  };
+}
+
+// ─────────────────────────────────────────────
+// MOUSE INTERACTIONS
+// ─────────────────────────────────────────────
+function onMouseMove(e) {
+  const rect = canvas.getBoundingClientRect();
+  mouseX = e.clientX - rect.left;
+  mouseY = e.clientY - rect.top;
+
+  const tip = document.getElementById('tooltip');
+  const cx = pumpCX(), pw = PUMP_W, mt = memTop(), mb = memBot(), mc = memMid();
+  let info = null;
+
+  // Check ions
+  for (const ion of [...boundIons, ...extNa, ...extK, ...cytNa, ...cytK]) {
+    if (Math.hypot(mouseX - ion.x, mouseY - ion.y) <= ion.r + 4) {
+      if (ion.isNa) {
+        info = ion.bound
+          ? '<strong>Na⁺ — enlazado a la proteína</strong>Sitio de unión activo<br>Conc. extracelular: ~145 mM<br>Conc. intracelular: ~12 mM'
+          : `<strong>Na⁺ — Ion sodio</strong>Radio iónico: 0.102 nm<br>${mouseY < mt ? 'Alta concentración (extracelular)' : 'Baja concentración (citoplasma)'}`;
+      } else {
+        info = ion.bound
+          ? '<strong>K⁺ — enlazado a la proteína</strong>Sitio de unión activo<br>Conc. intracelular: ~140 mM<br>Conc. extracelular: ~4 mM'
+          : `<strong>K⁺ — Ion potasio</strong>Radio iónico: 0.138 nm<br>${mouseY > mb ? 'Alta concentración (citoplasma)' : 'Baja concentración (extracelular)'}`;
+      }
+      break;
+    }
+  }
+
+  // Protein
+  if (!info && Math.abs(mouseX - cx) < pw + 16 && mouseY > mt - 44 && mouseY < mb + 44)
+    info = '<strong>Na⁺/K⁺-ATPasa (α+β)</strong>Subunidad α: 10 hélices TM (M1-M10)<br>Alterna entre E1 (inward) y E2 (outward)<br>Haz clic para avanzar el ciclo';
+
+  // Membrane
+  if (!info && mouseY > mt && mouseY < mb)
+    info = '<strong>Bicapa fosfolipídica</strong>Grosor: ~5 nm<br>Barrera hidrofóbica para iones<br>La bomba traversa ambas capas';
+
+  if (info) {
+    tip.innerHTML = info;
+    tip.style.display = 'block';
+    const tx = Math.min(mouseX + 14, W - 240);
+    const ty = Math.max(mouseY - tip.offsetHeight - 8, 4);
+    tip.style.left = tx + 'px'; tip.style.top = ty + 'px';
+    document.getElementById('hoverInfo').textContent = tip.textContent.split('\n')[0].replace(/\s+/g,' ').trim();
+  } else {
+    tip.style.display = 'none';
+    document.getElementById('hoverInfo').textContent = '—';
+  }
+}
+
+function onClick(e) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  const cx = pumpCX(), pw = PUMP_W, mt = memTop(), mb = memBot();
+
+  // Click on protein → advance
+  if (Math.abs(mx - cx) < pw + 16 && my > mt - 44 && my < mb + 44) {
+    advanceStep();
+  }
+
+  // Click on ion → info popup (simple alert)
+  for (const ion of [...boundIons, ...extNa, ...extK, ...cytNa, ...cytK]) {
+    if (Math.hypot(mx - ion.x, my - ion.y) <= ion.r + 4) {
+      const msg = ion.isNa
+        ? `Ion Sodio (Na⁺)\n─────────────\nNúmero atómico: 11\nRadio iónico: 0.102 nm\nConcentración extracelular: ~145 mM\nConcentración intracelular: ~12 mM\nLa bomba exporta 3 Na⁺ por ciclo`
+        : `Ion Potasio (K⁺)\n─────────────\nNúmero atómico: 19\nRadio iónico: 0.138 nm\nConcentración extracelular: ~4 mM\nConcentración intracelular: ~140 mM\nLa bomba importa 2 K⁺ por ciclo`;
+      alert(msg);
+      break;
+    }
+  }
+}
+
+// ─────────────────────────────────────────────
+// START
+// ─────────────────────────────────────────────
+window.addEventListener('load', () => {
+  init();
+  setVisTarget(STEPS[0]);
+});
+</script>
+</body>
+</html>
