@@ -419,7 +419,6 @@ const PUMP_CX_FRAC = 0.45;
 const PUMP_W = 70;
 const MEM_THICK = 46; 
 
-// Se añade leakingIons para los iones en tránsito pasivo
 let extNa = [], extK = [], cytNa = [], cytK = [], boundIons = [], leakingIons = [];
 let hoverEl = null;
 let mouseX = 0, mouseY = 0;
@@ -468,20 +467,24 @@ function spawnIons() {
   const rnd = (a, b) => a + Math.random() * (b - a);
   const rvec = () => ({ vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5 });
 
-  for (let i=0;i<12;i++) {
-    const side = i < 7 ? rnd(30, cx-pw-25) : rnd(cx+pw+25, W-60);
+  // AUMENTADO: Extracellular Na+ de 12 a 35 iones
+  for (let i=0;i<35;i++) {
+    const side = i < 18 ? rnd(30, cx-pw-25) : rnd(cx+pw+25, W-60);
     extNa.push({ x:side, y:rnd(20, mt-15), ...rvec(), r:9, bound:false });
   }
-  for (let i=0;i<5;i++) {
-    const side = i < 3 ? rnd(40, cx-pw-30) : rnd(cx+pw+30, W-70);
+  // Extracellular K+
+  for (let i=0;i<10;i++) {
+    const side = i < 5 ? rnd(40, cx-pw-30) : rnd(cx+pw+30, W-70);
     extK.push({ x:side, y:rnd(25, mt-15), ...rvec(), r:9, bound:false });
   }
-  for (let i=0;i<12;i++) {
-    const side = i < 7 ? rnd(30, cx-pw-25) : rnd(cx+pw+25, W-60);
+  // AUMENTADO: Intracellular K+ de 12 a 35 iones
+  for (let i=0;i<35;i++) {
+    const side = i < 18 ? rnd(30, cx-pw-25) : rnd(cx+pw+25, W-60);
     cytK.push({ x:side, y:rnd(mb+15, mb+H*0.38), ...rvec(), r:9, bound:false });
   }
-  for (let i=0;i<5;i++) {
-    const side = i < 3 ? rnd(40, cx-pw-30) : rnd(cx+pw+30, W-70);
+  // Intracellular Na+
+  for (let i=0;i<10;i++) {
+    const side = i < 5 ? rnd(40, cx-pw-30) : rnd(cx+pw+30, W-70);
     cytNa.push({ x:side, y:rnd(mb+15, mb+H*0.38), ...rvec(), r:9, bound:false });
   }
 
@@ -504,54 +507,51 @@ function update() {
   const cx = pumpCX(), pw = PUMP_W;
   const mt = memTop(), mb = memBot();
 
-  // FUGAS PASIVAS DE IONES (LEAK CHANNELS) - Ahora con animación de tránsito
   leakTimer++;
-  if (leakTimer > 45) { // Ocurre aprox cada 0.7 segundos
+  if (leakTimer > 45) {
     leakTimer = 0;
     const naChanX = W * 0.8;
     const kChanX = W * 0.2;
 
-    // Fuga de Na+ (Entra a la célula a través del canal)
-    if (extNa.length > 2 && cytNa.length < 40) {
+    // Fuga de Na+ (Límites aumentados a 70 para permitir mayor acumulación)
+    if (extNa.length > 2 && cytNa.length < 70) {
       let ion = extNa.pop();
       ion.leaking = true;
-      ion.targetY = mb + 15; // Destino en el citoplasma
-      ion.x = naChanX + (Math.random()-0.5)*6; // Posición justo arriba del canal
+      ion.targetY = mb + 15; 
+      ion.x = naChanX + (Math.random()-0.5)*6; 
       ion.y = mt - 10;
-      ion.vx = 0; // Sin movimiento horizontal
-      ion.vy = 1.5; // Baja
+      ion.vx = 0; 
+      ion.vy = 1.5; 
       leakingIons.push(ion);
     }
-    // Fuga de K+ (Sale de la célula a través del canal)
-    if (cytK.length > 2 && extK.length < 40) {
+    // Fuga de K+
+    if (cytK.length > 2 && extK.length < 70) {
       let ion = cytK.pop();
       ion.leaking = true;
-      ion.targetY = mt - 15; // Destino en el espacio extracelular
-      ion.x = kChanX + (Math.random()-0.5)*6; // Posición justo debajo del canal
+      ion.targetY = mt - 15; 
+      ion.x = kChanX + (Math.random()-0.5)*6; 
       ion.y = mb + 10;
-      ion.vx = 0; // Sin movimiento horizontal
-      ion.vy = -1.5; // Sube
+      ion.vx = 0; 
+      ion.vy = -1.5; 
       leakingIons.push(ion);
     }
   }
 
-  // Animar los iones que están atravesando los canales
   for (let i = leakingIons.length - 1; i >= 0; i--) {
     let ion = leakingIons[i];
-    ion.y += ion.vy; // Mover verticalmente
+    ion.y += ion.vy; 
     
-    // Verificar si llegó a su destino
     if ((ion.vy > 0 && ion.y >= ion.targetY) || (ion.vy < 0 && ion.y <= ion.targetY)) {
       ion.leaking = false;
-      ion.vx = (Math.random()-0.5)*2; // Restaurar movimiento aleatorio
+      ion.vx = (Math.random()-0.5)*2; 
       ion.vy = (Math.random()-0.5)*2;
       
       if (ion.isNa) {
-        cytNa.push(ion); // Agregar al citoplasma
+        cytNa.push(ion); 
       } else {
-        extK.push(ion);  // Agregar al espacio extracelular
+        extK.push(ion);  
       }
-      leakingIons.splice(i, 1); // Remover de la lista de tránsito
+      leakingIons.splice(i, 1); 
     }
   }
 
@@ -628,7 +628,7 @@ function applyStepEnd(from, to) {
       if (ion.isNa) { ion.bound = false; ion.vx = (Math.random()-0.5)*1; ion.vy = -0.8; extNa.push(ion); }
     }
     boundIons = boundIons.filter(i => !i.isNa);
-    while(extNa.length > 40) extNa.shift();
+    while(extNa.length > 70) extNa.shift();
 
     for (let i=0;i<2;i++) {
       let src = extK.find(k => !k.bound);
@@ -650,7 +650,7 @@ function applyStepEnd(from, to) {
       if (!ion.isNa) { ion.bound = false; ion.vx = (Math.random()-0.5)*0.8; ion.vy = 0.8; cytK.push(ion); }
     }
     boundIons = boundIons.filter(i => i.isNa);
-    while(cytK.length > 40) cytK.shift(); 
+    while(cytK.length > 70) cytK.shift(); 
 
     for (let i=0;i<3;i++) {
       let src = cytNa.find(n => !n.bound);
@@ -690,14 +690,12 @@ function drawLeakChannels(mt, mb) {
   const naChanX = W * 0.8;
   const kChanX = W * 0.2;
 
-  // Canal K+
   ctx.fillStyle = '#207050';
   roundRect(ctx, kChanX - 16, mt - 6, 12, mb - mt + 12, 4); ctx.fill();
   roundRect(ctx, kChanX + 4, mt - 6, 12, mb - mt + 12, 4); ctx.fill();
   ctx.fillStyle = 'rgba(16,122,86,0.15)';
   ctx.fillRect(kChanX - 4, mt, 8, mb - mt);
   
-  // Canal Na+
   ctx.fillStyle = '#b04030';
   roundRect(ctx, naChanX - 16, mt - 6, 12, mb - mt + 12, 4); ctx.fill();
   roundRect(ctx, naChanX + 4, mt - 6, 12, mb - mt + 12, 4); ctx.fill();
@@ -776,7 +774,6 @@ function drawProtein(mt, mb, mc, cx, pw) {
 
 function drawIons() {
   const showLbls = document.getElementById('chkLabels') ? document.getElementById('chkLabels').checked : true;
-  // Dibujar también los iones que están en tránsito pasivo (leakingIons)
   for (const ion of [...extNa, ...extK, ...cytNa, ...cytK, ...leakingIons]) drawIon(ion, showLbls, false);
   for (const ion of boundIons) drawIon(ion, showLbls, true);
 }
@@ -908,8 +905,8 @@ function onMouseMove(e) {
   if (!info) {
     for (const ion of [...boundIons, ...extNa, ...extK, ...cytNa, ...cytK, ...leakingIons]) {
       if (Math.hypot(mouseX - ion.x, mouseY - ion.y) <= ion.r + 4) {
-        if (ion.isNa) { info = ion.bound ? '<strong>Na⁺ — enlazado</strong><br>Sitio activo' : `<strong>Na⁺ — Ion sodio</strong><br>${mouseY < mt ? 'Buscando entrar pasivamente' : 'Acumulándose en el citoplasma'}`; } 
-        else { info = ion.bound ? '<strong>K⁺ — enlazado</strong><br>Sitio activo' : `<strong>K⁺ — Ion potasio</strong><br>${mouseY > mb ? 'Buscando salir pasivamente' : 'Suelto en el exterior'}`; }
+        if (ion.isNa) { info = ion.bound ? '<strong>Na⁺ — enlazado</strong><br>Sitio activo' : `<strong>Na⁺ — Ion sodio</strong><br>${mouseY < mt ? 'Alta concentración (extracelular)' : 'Acumulándose en el citoplasma'}`; } 
+        else { info = ion.bound ? '<strong>K⁺ — enlazado</strong><br>Sitio activo' : `<strong>K⁺ — Ion potasio</strong><br>${mouseY > mb ? 'Alta concentración (citoplasma)' : 'Suelto en el exterior'}`; }
         break;
       }
     }
