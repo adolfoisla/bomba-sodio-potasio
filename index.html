@@ -347,7 +347,7 @@ input[type=range] {
     <div class="step-card">
       <div class="step-number" id="stepNum">Paso 1 de 6</div>
       <div class="step-title" id="stepTitle">E1 — Conformación inward (citoplasma abierto)</div>
-      <div class="step-desc" id="stepDesc">Los sitios de unión de la proteína están abiertos hacia el citoplasma. La bomba está lista para capturar 3 iones Na⁺ del interior celular.</div>
+      <div class="step-desc" id="stepDesc" aria-live="polite">Los sitios de unión de la proteína están abiertos hacia el citoplasma. La bomba está lista para capturar 3 iones Na⁺ del interior celular.</div>
       <div class="state-badge" id="stateBadge">Estado: E1</div>
     </div>
 
@@ -374,8 +374,8 @@ input[type=range] {
         <label class="toggle-item"><input type="checkbox" id="chkLabels" checked><span>Mostrar etiquetas de iones</span></label>
         <label class="toggle-item"><input type="checkbox" id="chkGradient" checked><span>Mostrar gradiente de concentración</span></label>
         <label class="toggle-item"><input type="checkbox" id="chkDomains"><span>Mostrar dominios proteicos (N/P/A)</span></label>
+        <label class="toggle-item" style="color: #c03010; font-weight: 600; margin-top: 5px;"><input type="checkbox" id="chkDigoxina"><span>💉 Añadir Digoxina (Inhibidor)</span></label>
       </div>
-    </div>
 
     <!-- Legend -->
     <div class="legend">
@@ -633,15 +633,22 @@ function update() {
     ion.y += (ty - ion.y) * 0.12;
   }
 
-  // Auto play
+ // Auto play
   if (autoPlay) {
     autoDelay++;
     if (autoDelay >= autoDelayMax) {
       autoDelay = 0;
-      advanceStep();
+      // Verifica si la digoxina detiene el autoplay
+      if (document.getElementById('chkDigoxina') && document.getElementById('chkDigoxina').checked && stepIdx === 3) {
+        autoPlay = false;
+        document.getElementById('btnAuto').textContent = '▶ Auto';
+        document.getElementById('btnAuto').className = '';
+        alert("¡Bomba bloqueada! La Digoxina se ha unido a la cara extracelular (estado E2P), impidiendo la desfosforilación y deteniendo el ciclo.");
+      } else {
+        advanceStep();
+      }
     }
   }
-}
 
 // ─────────────────────────────────────────────
 // STEP LOGIC
@@ -687,6 +694,10 @@ function applyStepEnd(from, to) {
       }
     }
     boundIons = boundIons.filter(i => !i.isNa);
+    
+    // LIMITADOR DE MEMORIA: Elimina iones viejos si hay demasiados
+    while(extNa.length > 25) extNa.shift();
+
     // Bind 2 K+ from extracellular pool (or create)
     const kSlots = [[-12,-10],[12,-10]];
     for (let i=0;i<2;i++) {
@@ -714,6 +725,9 @@ function applyStepEnd(from, to) {
       }
     }
     boundIons = boundIons.filter(i => i.isNa);
+    
+    // LIMITADOR DE MEMORIA: Elimina iones viejos si hay demasiados
+    while(cytK.length > 25) cytK.shift();
 
     // Bind 3 Na+ from cytoplasm
     const naSlots = [[-18,8],[0,-2],[18,8]];
@@ -726,7 +740,6 @@ function applyStepEnd(from, to) {
     }
   }
 }
-
 // ─────────────────────────────────────────────
 // RENDER
 // ─────────────────────────────────────────────
@@ -1135,7 +1148,14 @@ function updateSidebar() {
 }
 
 function bindUI() {
-  document.getElementById('btnNext').onclick = () => advanceStep();
+  document.getElementById('btnNext').onclick = () => {
+    // Si la digoxina está activada y estamos en el paso E2P (índice 3), la bomba se bloquea
+    if (document.getElementById('chkDigoxina') && document.getElementById('chkDigoxina').checked && stepIdx === 3) {
+      alert("¡Bomba bloqueada! La Digoxina se ha unido a la cara extracelular (estado E2P), impidiendo la desfosforilación y deteniendo el ciclo.");
+      return; 
+    }
+    advanceStep();
+  };
   document.getElementById('btnPrev').onclick = () => goBack();
   document.getElementById('btnAuto').onclick = () => {
     autoPlay = !autoPlay;
