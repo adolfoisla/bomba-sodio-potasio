@@ -467,28 +467,28 @@ function spawnIons() {
   const rnd = (a, b) => a + Math.random() * (b - a);
   const rvec = () => ({ vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5 });
 
-  // Na+ Extracelular (Abundante - 35 iones) - ¡Ahora con isNa: true!
+  // Na+ Extracelular - Distribuido uniformemente por todo el ancho (mitad izq, mitad der)
   for (let i=0;i<35;i++) {
-    const side = i < 18 ? rnd(30, cx-pw-25) : rnd(cx+pw+25, W-60);
+    const side = i % 2 === 0 ? rnd(20, cx-pw-20) : rnd(cx+pw+20, W-90);
     extNa.push({ x:side, y:rnd(20, mt-15), ...rvec(), r:9, bound:false, isNa: true });
   }
-  // K+ Extracelular (Escaso - 10 iones)
+  // K+ Extracelular
   for (let i=0;i<10;i++) {
-    const side = i < 5 ? rnd(40, cx-pw-30) : rnd(cx+pw+30, W-70);
+    const side = i % 2 === 0 ? rnd(20, cx-pw-20) : rnd(cx+pw+20, W-90);
     extK.push({ x:side, y:rnd(25, mt-15), ...rvec(), r:9, bound:false, isNa: false });
   }
-  // K+ Intracelular (Abundante - 35 iones)
+  // K+ Intracelular
   for (let i=0;i<35;i++) {
-    const side = i < 18 ? rnd(30, cx-pw-25) : rnd(cx+pw+25, W-60);
+    const side = i % 2 === 0 ? rnd(20, cx-pw-20) : rnd(cx+pw+20, W-90);
     cytK.push({ x:side, y:rnd(mb+15, mb+H*0.38), ...rvec(), r:9, bound:false, isNa: false });
   }
-  // Na+ Intracelular (Escaso - 10 iones) - ¡Ahora con isNa: true!
+  // Na+ Intracelular
   for (let i=0;i<10;i++) {
-    const side = i < 5 ? rnd(40, cx-pw-30) : rnd(cx+pw+30, W-70);
+    const side = i % 2 === 0 ? rnd(20, cx-pw-20) : rnd(cx+pw+20, W-90);
     cytNa.push({ x:side, y:rnd(mb+15, mb+H*0.38), ...rvec(), r:9, bound:false, isNa: true });
   }
 
-  // Iones unidos a la bomba (Na+ en estado inicial E1)
+  // Iones unidos a la bomba
   const naSlots = [[-18,8],[0,-2],[18,8]];
   for (let i=0;i<3;i++) {
     boundIons.push({ x: pumpCX()+naSlots[i][0], y: memMid()+naSlots[i][1], vx:0, vy:0, r:9, bound:true, isNa:true, slot:i });
@@ -556,6 +556,7 @@ function update() {
     }
   }
 
+  // LIMITES CORREGIDOS: Los iones ahora flotan por todo el ancho de la pantalla (hasta W - 90)
   function wanderIon(ion, minX, maxX, minY, maxY) {
     if (ion.bound || ion.leaking) return;
     ion.x += ion.vx; ion.y += ion.vy;
@@ -566,10 +567,10 @@ function update() {
     if (spd > 0.8) { ion.vx /= spd * 1.25; ion.vy /= spd * 1.25; }
   }
 
-  for (const ion of extNa) wanderIon(ion, 20, cx-pw-20, 15, mt-8);
-  for (const ion of extK)  wanderIon(ion, 20, cx-pw-20, 15, mt-8);
-  for (const ion of cytNa) wanderIon(ion, 20, cx-pw-20, mb+8, mb+H*0.38);
-  for (const ion of cytK)  wanderIon(ion, 20, cx-pw-20, mb+8, mb+H*0.38);
+  for (const ion of extNa) wanderIon(ion, 20, W-90, 15, mt-8);
+  for (const ion of extK)  wanderIon(ion, 20, W-90, 15, mt-8);
+  for (const ion of cytNa) wanderIon(ion, 20, W-90, mb+8, mb+H*0.38);
+  for (const ion of cytK)  wanderIon(ion, 20, W-90, mb+8, mb+H*0.38);
 
   const naSlots = [[-18,8],[0,-2],[18,8]];
   const kSlots  = [[-12,-10],[12,-10]];
