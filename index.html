@@ -335,29 +335,24 @@ input[type=range] {
 </header>
 
 <div class="app">
-  <!-- Canvas -->
   <div class="canvas-area">
     <canvas id="sim"></canvas>
     <div id="tooltip"></div>
   </div>
 
-  <!-- Sidebar -->
   <div class="sidebar">
-    <!-- Step info -->
     <div class="step-card">
       <div class="step-number" id="stepNum">Paso 1 de 6</div>
       <div class="step-title" id="stepTitle">E1 — Conformación inward (citoplasma abierto)</div>
-      <div class="step-desc" id="stepDesc" aria-live="polite">Los sitios de unión de la proteína están abiertos hacia el citoplasma. La bomba está lista para capturar 3 iones Na⁺ del interior celular.</div>
+      <div class="step-desc" id="stepDesc" aria-live="polite">Los sitios de unión están abiertos hacia el citoplasma. La bomba está lista para capturar 3 iones Na⁺ del interior celular.</div>
       <div class="state-badge" id="stateBadge">Estado: E1</div>
     </div>
 
-    <!-- Cycle diagram -->
     <div class="cycle-wrap">
       <h3>Ciclo Post-Albers</h3>
       <svg id="cycleSvg" viewBox="0 0 270 185"></svg>
     </div>
 
-    <!-- Controls -->
     <div class="controls">
       <h3>Controles</h3>
       <div class="btn-row">
@@ -376,8 +371,8 @@ input[type=range] {
         <label class="toggle-item"><input type="checkbox" id="chkDomains"><span>Mostrar dominios proteicos (N/P/A)</span></label>
         <label class="toggle-item" style="color: #c03010; font-weight: 600; margin-top: 5px;"><input type="checkbox" id="chkDigoxina"><span>💉 Añadir Digoxina (Inhibidor)</span></label>
       </div>
+    </div>
 
-    <!-- Legend -->
     <div class="legend">
       <h3>Leyenda</h3>
       <div class="legend-grid">
@@ -392,7 +387,6 @@ input[type=range] {
       </div>
     </div>
 
-    <!-- Stats -->
     <div class="stats">
       <h3>Estadísticas</h3>
       <div class="stat-grid">
@@ -589,13 +583,6 @@ function loop() {
 
 function easeInOut(t) { return t<0.5 ? 2*t*t : -1+(4-2*t)*t; }
 
-function lerpColor(a, b, t) {
-  const pc = (h) => parseInt(h.slice(1), 16);
-  const ra = (pc(a) >> 16) & 255, ga = (pc(a) >> 8) & 255, ba = pc(a) & 255;
-  const rb = (pc(b) >> 16) & 255, gb = (pc(b) >> 8) & 255, bb = pc(b) & 255;
-  return `rgb(${Math.round(ra+(rb-ra)*t)},${Math.round(ga+(gb-ga)*t)},${Math.round(ba+(bb-ba)*t)})`;
-}
-
 function update() {
   // Lerp visuals
   const speed = 0.04;
@@ -633,7 +620,7 @@ function update() {
     ion.y += (ty - ion.y) * 0.12;
   }
 
- // Auto play
+  // Auto play
   if (autoPlay) {
     autoDelay++;
     if (autoDelay >= autoDelayMax) {
@@ -649,6 +636,7 @@ function update() {
       }
     }
   }
+}
 
 // ─────────────────────────────────────────────
 // STEP LOGIC
@@ -740,6 +728,7 @@ function applyStepEnd(from, to) {
     }
   }
 }
+
 // ─────────────────────────────────────────────
 // RENDER
 // ─────────────────────────────────────────────
@@ -748,7 +737,6 @@ function render() {
 
   const mt = memTop(), mb = memBot(), mc = memMid(), cx = pumpCX(), pw = PUMP_W;
 
-  // Region backgrounds
   ctx.fillStyle = '#e8f0fc';
   ctx.fillRect(0, 0, W, mt);
   ctx.fillStyle = '#e2f5ea';
@@ -757,31 +745,27 @@ function render() {
   ctx.fillRect(0, mt, W, mb - mt);
 
   drawMembrane(mt, mb, mc, cx, pw);
-  if (document.getElementById('chkDomains').checked) drawDomains(mt, mb, cx, pw);
+  if (document.getElementById('chkDomains') && document.getElementById('chkDomains').checked) drawDomains(mt, mb, cx, pw);
   drawProtein(mt, mb, mc, cx, pw);
   drawIons();
   drawATPADP(mc, cx, pw, mb);
-  if (document.getElementById('chkGradient').checked) drawGradient(mt, mb);
+  if (document.getElementById('chkGradient') && document.getElementById('chkGradient').checked) drawGradient(mt, mb);
   drawLabels(mt, mb, cx, pw);
 }
 
 function drawMembrane(mt, mb, mc, cx, pw) {
-  // Outer leaflet
   ctx.fillStyle = '#c8a050';
   ctx.fillRect(0, mt, W, 26);
   ctx.fillRect(0, mb - 26, W, 26);
-  // Hydrophobic core
   ctx.fillStyle = 'rgba(210,178,100,0.35)';
   ctx.fillRect(0, mt + 26, W, mb - mt - 52);
 
-  // Phospholipid heads
   for (let x = 18; x < W; x += 18) {
     if (Math.abs(x - cx) > pw + 18) {
       ctx.fillStyle = '#7a5018';
       ctx.beginPath(); ctx.arc(x, mt + 9, 6, 0, Math.PI*2); ctx.fill();
       ctx.strokeStyle = '#5a3808'; ctx.lineWidth = 0.8;
       ctx.stroke();
-      // tails
       ctx.strokeStyle = '#a07830'; ctx.lineWidth = 1.2;
       ctx.beginPath(); ctx.moveTo(x-2, mt+15); ctx.lineTo(x-4, mt+22); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x+2, mt+15); ctx.lineTo(x+4, mt+22); ctx.stroke();
@@ -797,8 +781,8 @@ function drawMembrane(mt, mb, mc, cx, pw) {
 }
 
 function drawDomains(mt, mb, cx, pw) {
+  const mc = memMid();
   const alpha = 0.12;
-  // Domain N (nucleotide) — top cytoplasmic loop
   ctx.fillStyle = `rgba(30,80,190,${alpha})`;
   roundRect(ctx, cx - 28, mt - 72, 80, 52, 8); ctx.fill();
   ctx.fillStyle = '#1a4fa0';
@@ -808,7 +792,6 @@ function drawDomains(mt, mb, cx, pw) {
   ctx.font = '9px DM Sans';
   ctx.fillText('(nucleótido)', cx - 24, mt - 14);
 
-  // Domain P (phosphorylation) — transmembrane
   ctx.fillStyle = `rgba(180,60,40,${alpha})`;
   roundRect(ctx, cx - 24, mc - 28, 72, 56, 8); ctx.fill();
   ctx.fillStyle = '#b03020';
@@ -818,7 +801,6 @@ function drawDomains(mt, mb, cx, pw) {
   ctx.font = '9px DM Sans';
   ctx.fillText('(fosforilación)', cx - 30, mc + 6);
 
-  // Domain A (actuator) — bottom
   ctx.fillStyle = `rgba(20,130,80,${alpha})`;
   roundRect(ctx, cx - 36, mb + 4, 80, 36, 8); ctx.fill();
   ctx.fillStyle = '#107a56';
@@ -832,13 +814,11 @@ function drawDomains(mt, mb, cx, pw) {
 function drawProtein(mt, mb, mc, cx, pw) {
   const ptop = mt - 40, pbot = mb + 40;
 
-  // Shadow
   ctx.fillStyle = 'rgba(0,0,0,0.08)';
   ctx.beginPath();
   ctx.ellipse(cx + 4, mc + 4, pw + 12, (pbot-ptop)/2 + 4, 0, 0, Math.PI*2);
   ctx.fill();
 
-  // Body
   ctx.fillStyle = '#6b3d18';
   ctx.beginPath();
   ctx.moveTo(cx - pw, ptop);
@@ -853,7 +833,6 @@ function drawProtein(mt, mb, mc, cx, pw) {
   ctx.fill();
   ctx.strokeStyle = '#4a2408'; ctx.lineWidth = 1.5; ctx.stroke();
 
-  // Inner highlight
   ctx.fillStyle = '#9e6030';
   ctx.beginPath();
   ctx.ellipse(cx, mc, pw - 10, (pbot-ptop)/2 - 12, 0, 0, Math.PI*2);
@@ -863,7 +842,6 @@ function drawProtein(mt, mb, mc, cx, pw) {
   ctx.ellipse(cx, mc, pw - 18, (pbot-ptop)/2 - 22, 0, 0, Math.PI*2);
   ctx.fill();
 
-  // Channel pore
   const squeeze = 1 - 0.28 * Math.abs(Math.sin(vis.twist * Math.PI));
   const poreW = 30 * squeeze;
   ctx.fillStyle = '#4488cc';
@@ -872,20 +850,17 @@ function drawProtein(mt, mb, mc, cx, pw) {
   ctx.fill();
   ctx.strokeStyle = '#2266aa'; ctx.lineWidth = 1; ctx.stroke();
 
-  // TOP GATE (extracellular) 
   const topGap = vis.gateTop * 22;
   ctx.strokeStyle = '#3a1a08'; ctx.lineWidth = 3.5;
   ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(cx - pw + 12, ptop + 8); ctx.lineTo(cx - 8, ptop + 8 - topGap); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(cx + pw - 12, ptop + 8); ctx.lineTo(cx + 8, ptop + 8 - topGap); ctx.stroke();
 
-  // BOTTOM GATE (cytoplasmic)
   const botGap = vis.gateBot * 22;
   ctx.beginPath(); ctx.moveTo(cx - pw + 12, pbot - 8); ctx.lineTo(cx - 8, pbot - 8 + botGap); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(cx + pw - 12, pbot - 8); ctx.lineTo(cx + 8, pbot - 8 + botGap); ctx.stroke();
   ctx.lineCap = 'butt'; ctx.lineWidth = 1;
 
-  // Phosphorylation site glow
   if (vis.phospho > 0.05) {
     const a = Math.min(vis.phospho, 1);
     const r = 12 * a;
@@ -903,7 +878,6 @@ function drawProtein(mt, mb, mc, cx, pw) {
     ctx.textAlign = 'left';
   }
 
-  // State label
   const s = STEPS[stepIdx];
   ctx.font = 'bold 11px DM Mono';
   ctx.textAlign = 'center';
@@ -916,7 +890,7 @@ function drawProtein(mt, mb, mc, cx, pw) {
 }
 
 function drawIons() {
-  const showLbls = document.getElementById('chkLabels').checked;
+  const showLbls = document.getElementById('chkLabels') ? document.getElementById('chkLabels').checked : true;
   for (const ion of [...extNa, ...extK, ...cytNa, ...cytK]) drawIon(ion, showLbls, false);
   for (const ion of boundIons) drawIon(ion, showLbls, true);
 }
@@ -932,16 +906,13 @@ function drawIon(ion, showLabel, bound) {
     ctx.beginPath(); ctx.arc(ion.x, ion.y, r + 6, 0, Math.PI*2); ctx.fill();
   }
 
-  // Circle
   ctx.fillStyle = fill;
   ctx.beginPath(); ctx.arc(ion.x, ion.y, r, 0, Math.PI*2); ctx.fill();
   ctx.strokeStyle = dark; ctx.lineWidth = 1.2; ctx.stroke();
 
-  // Highlight
   ctx.fillStyle = 'rgba(255,255,255,0.25)';
   ctx.beginPath(); ctx.arc(ion.x - r*0.3, ion.y - r*0.3, r*0.45, 0, Math.PI*2); ctx.fill();
 
-  // Label
   if (showLabel) {
     ctx.fillStyle = 'rgba(255,255,255,0.95)';
     ctx.font = 'bold 8px DM Sans';
@@ -955,7 +926,6 @@ function drawIon(ion, showLabel, bound) {
 function drawATPADP(mc, cx, pw, mb) {
   const ax = cx - pw - 65, ay = mb + 50;
 
-  // ATP
   if (vis.atpVis > 0.04) {
     const a = Math.min(vis.atpVis, 1);
     ctx.fillStyle = `rgba(212,146,10,${0.9*a})`;
@@ -964,7 +934,6 @@ function drawATPADP(mc, cx, pw, mb) {
     ctx.fillStyle = `rgba(60,30,0,${a})`;
     ctx.font = 'bold 12px DM Sans'; ctx.textAlign = 'center';
     ctx.fillText('ATP', ax, ay + 4); ctx.textAlign = 'left';
-    // Arrow to protein
     ctx.strokeStyle = `rgba(170,100,8,${a*0.7})`; ctx.lineWidth = 1.5;
     ctx.setLineDash([5,4]);
     ctx.beginPath(); ctx.moveTo(ax + 26, ay - 4); ctx.lineTo(cx - pw - 2, mb + 12); ctx.stroke();
@@ -972,7 +941,6 @@ function drawATPADP(mc, cx, pw, mb) {
     ctx.lineWidth = 1;
   }
 
-  // ADP
   if (vis.adpVis > 0.04) {
     const a = Math.min(vis.adpVis, 1);
     const ox = ax + 38 * (1-a), oy = ay - 28 * (1-a);
@@ -985,7 +953,6 @@ function drawATPADP(mc, cx, pw, mb) {
     ctx.lineWidth = 1;
   }
 
-  // Pi
   if (vis.piVis > 0.04) {
     const a = Math.min(vis.piVis, 1);
     const px = cx + pw + 50, py = mb + 48;
@@ -1032,7 +999,6 @@ function drawGradient(mt, mb) {
   gradBar(22, mt - 8, '#d63e12', '#fde8e2', 'Na⁺', true);
   gradBar(mb + 10, mb + H*0.38, '#107a56', '#dcf5eb', 'K⁺', false);
 
-  // ΔΨ label
   ctx.fillStyle = 'rgba(30,60,130,0.7)';
   ctx.font = '500 9px DM Mono';
   ctx.textAlign = 'center';
@@ -1047,7 +1013,6 @@ function drawLabels(mt, mb, cx, pw) {
   ctx.fillStyle = 'rgba(8,95,55,0.85)';
   ctx.fillText('Citoplasma  ·  [Na⁺]↓  [K⁺]↑', 14, mb + 22);
 
-  // Arrows + ratio
   ctx.font = '11px DM Sans';
   ctx.fillStyle = 'rgba(200,50,10,0.8)';
   ctx.fillText('3 Na⁺ →', cx - 80, mt - 52);
@@ -1061,7 +1026,6 @@ function drawLabels(mt, mb, cx, pw) {
   arrowLine(ctx, cx + 28, mt - 14, cx + 28, mt - 46);
   ctx.setLineDash([]); ctx.lineWidth = 1;
 
-  // ATP info
   ctx.font = '10px DM Sans';
   ctx.fillStyle = 'rgba(140,90,10,0.7)';
   ctx.fillText('1 ATP / ciclo', cx - pw - 75, mb + 75);
@@ -1092,14 +1056,13 @@ function roundRect(ctx, x, y, w, h, r) {
 // ─────────────────────────────────────────────
 function drawCycle() {
   const svg = document.getElementById('cycleSvg');
+  if (!svg) return;
   const n = STEPS.length;
   const cx = 135, cy = 98, r = 68;
   let html = '';
 
-  // Ring
   html += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e0d8c8" stroke-width="1.5" stroke-dasharray="6 4"/>`;
 
-  // Clockwise arrow on ring
   const ang = -0.2;
   const ax = cx + r * Math.cos(ang), ay = cy + r * Math.sin(ang);
   html += `<path d="M${ax.toFixed(1)},${ay.toFixed(1)} l5,-7 l6,3" fill="none" stroke="#b0a890" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`;
@@ -1118,14 +1081,12 @@ function drawCycle() {
     html += `<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="${nr}" fill="${col}" opacity="${active?1:0.55}" stroke="${col}" stroke-width="${active?2:0}"/>`;
     html += `<text x="${bx.toFixed(1)}" y="${(by+4).toFixed(1)}" text-anchor="middle" fill="white" font-size="${active?11:9}" font-weight="600" font-family="DM Mono">${i+1}</text>`;
 
-    // Short state name
     const label = STEPS[i].id;
     const lx = bx + Math.cos(angle) * (nr + 14);
     const ly = by + Math.sin(angle) * (nr + 14) + 3;
     html += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" fill="${active ? col : '#8a8070'}" font-size="${active?8:7}" font-weight="${active?700:400}" font-family="DM Mono">${label}</text>`;
   }
 
-  // Center label
   html += `<text x="${cx}" y="${cy-4}" text-anchor="middle" fill="#6a6050" font-size="8" font-family="DM Sans">Post-Albers</text>`;
   html += `<text x="${cx}" y="${cy+8}" text-anchor="middle" fill="#6a6050" font-size="8" font-family="DM Sans">Cycle</text>`;
 
@@ -1137,19 +1098,27 @@ function drawCycle() {
 // ─────────────────────────────────────────────
 function updateSidebar() {
   const s = STEPS[stepIdx];
-  document.getElementById('stepNum').textContent = `Paso ${stepIdx+1} de ${STEPS.length}`;
-  document.getElementById('stepTitle').textContent = s.title;
-  document.getElementById('stepTitle').style.color = s.color;
-  document.getElementById('stepDesc').textContent = s.desc;
-  document.getElementById('stateBadge').textContent = `Estado: ${s.badge}`;
-  document.getElementById('stateBadge').style.color = s.color;
-  document.getElementById('stateBadge').style.background = s.color + '18';
-  document.getElementById('stateBadge').style.borderColor = s.color + '40';
+  const elNum = document.getElementById('stepNum');
+  const elTitle = document.getElementById('stepTitle');
+  const elDesc = document.getElementById('stepDesc');
+  const elBadge = document.getElementById('stateBadge');
+  
+  if(elNum) elNum.textContent = `Paso ${stepIdx+1} de ${STEPS.length}`;
+  if(elTitle) {
+    elTitle.textContent = s.title;
+    elTitle.style.color = s.color;
+  }
+  if(elDesc) elDesc.textContent = s.desc;
+  if(elBadge) {
+    elBadge.textContent = `Estado: ${s.badge}`;
+    elBadge.style.color = s.color;
+    elBadge.style.background = s.color + '18';
+    elBadge.style.borderColor = s.color + '40';
+  }
 }
 
 function bindUI() {
   document.getElementById('btnNext').onclick = () => {
-    // Si la digoxina está activada y estamos en el paso E2P (índice 3), la bomba se bloquea
     if (document.getElementById('chkDigoxina') && document.getElementById('chkDigoxina').checked && stepIdx === 3) {
       alert("¡Bomba bloqueada! La Digoxina se ha unido a la cara extracelular (estado E2P), impidiendo la desfosforilación y deteniendo el ciclo.");
       return; 
@@ -1195,7 +1164,6 @@ function onMouseMove(e) {
   const cx = pumpCX(), pw = PUMP_W, mt = memTop(), mb = memBot(), mc = memMid();
   let info = null;
 
-  // Check ions
   for (const ion of [...boundIons, ...extNa, ...extK, ...cytNa, ...cytK]) {
     if (Math.hypot(mouseX - ion.x, mouseY - ion.y) <= ion.r + 4) {
       if (ion.isNa) {
@@ -1211,11 +1179,9 @@ function onMouseMove(e) {
     }
   }
 
-  // Protein
   if (!info && Math.abs(mouseX - cx) < pw + 16 && mouseY > mt - 44 && mouseY < mb + 44)
     info = '<strong>Na⁺/K⁺-ATPasa (α+β)</strong>Subunidad α: 10 hélices TM (M1-M10)<br>Alterna entre E1 (inward) y E2 (outward)<br>Haz clic para avanzar el ciclo';
 
-  // Membrane
   if (!info && mouseY > mt && mouseY < mb)
     info = '<strong>Bicapa fosfolipídica</strong>Grosor: ~5 nm<br>Barrera hidrofóbica para iones<br>La bomba traversa ambas capas';
 
@@ -1237,12 +1203,10 @@ function onClick(e) {
   const mx = e.clientX - rect.left, my = e.clientY - rect.top;
   const cx = pumpCX(), pw = PUMP_W, mt = memTop(), mb = memBot();
 
-  // Click on protein → advance
   if (Math.abs(mx - cx) < pw + 16 && my > mt - 44 && my < mb + 44) {
     advanceStep();
   }
 
-  // Click on ion → info popup (simple alert)
   for (const ion of [...boundIons, ...extNa, ...extK, ...cytNa, ...cytK]) {
     if (Math.hypot(mx - ion.x, my - ion.y) <= ion.r + 4) {
       const msg = ion.isNa
