@@ -467,27 +467,28 @@ function spawnIons() {
   const rnd = (a, b) => a + Math.random() * (b - a);
   const rvec = () => ({ vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5 });
 
-  // AUMENTADO: Extracellular Na+ de 12 a 35 iones
+  // Na+ Extracelular (Abundante - 35 iones) - ¡Ahora con isNa: true!
   for (let i=0;i<35;i++) {
     const side = i < 18 ? rnd(30, cx-pw-25) : rnd(cx+pw+25, W-60);
-    extNa.push({ x:side, y:rnd(20, mt-15), ...rvec(), r:9, bound:false });
+    extNa.push({ x:side, y:rnd(20, mt-15), ...rvec(), r:9, bound:false, isNa: true });
   }
-  // Extracellular K+
+  // K+ Extracelular (Escaso - 10 iones)
   for (let i=0;i<10;i++) {
     const side = i < 5 ? rnd(40, cx-pw-30) : rnd(cx+pw+30, W-70);
-    extK.push({ x:side, y:rnd(25, mt-15), ...rvec(), r:9, bound:false });
+    extK.push({ x:side, y:rnd(25, mt-15), ...rvec(), r:9, bound:false, isNa: false });
   }
-  // AUMENTADO: Intracellular K+ de 12 a 35 iones
+  // K+ Intracelular (Abundante - 35 iones)
   for (let i=0;i<35;i++) {
     const side = i < 18 ? rnd(30, cx-pw-25) : rnd(cx+pw+25, W-60);
-    cytK.push({ x:side, y:rnd(mb+15, mb+H*0.38), ...rvec(), r:9, bound:false });
+    cytK.push({ x:side, y:rnd(mb+15, mb+H*0.38), ...rvec(), r:9, bound:false, isNa: false });
   }
-  // Intracellular Na+
+  // Na+ Intracelular (Escaso - 10 iones) - ¡Ahora con isNa: true!
   for (let i=0;i<10;i++) {
     const side = i < 5 ? rnd(40, cx-pw-30) : rnd(cx+pw+30, W-70);
-    cytNa.push({ x:side, y:rnd(mb+15, mb+H*0.38), ...rvec(), r:9, bound:false });
+    cytNa.push({ x:side, y:rnd(mb+15, mb+H*0.38), ...rvec(), r:9, bound:false, isNa: true });
   }
 
+  // Iones unidos a la bomba (Na+ en estado inicial E1)
   const naSlots = [[-18,8],[0,-2],[18,8]];
   for (let i=0;i<3;i++) {
     boundIons.push({ x: pumpCX()+naSlots[i][0], y: memMid()+naSlots[i][1], vx:0, vy:0, r:9, bound:true, isNa:true, slot:i });
@@ -513,7 +514,7 @@ function update() {
     const naChanX = W * 0.8;
     const kChanX = W * 0.2;
 
-    // Fuga de Na+ (Límites aumentados a 70 para permitir mayor acumulación)
+    // Fuga de Na+
     if (extNa.length > 2 && cytNa.length < 70) {
       let ion = extNa.pop();
       ion.leaking = true;
@@ -632,7 +633,7 @@ function applyStepEnd(from, to) {
 
     for (let i=0;i<2;i++) {
       let src = extK.find(k => !k.bound);
-      if (!src) src = { x: pumpCX(), y: memTop()-20, vx:0, vy:0, r:9 };
+      if (!src) src = { x: pumpCX(), y: memTop()-20, vx:0, vy:0, r:9, isNa: false };
       else extK = extK.filter(k => k !== src);
       src.bound = true; src.isNa = false; src.slot = i;
       boundIons.push(src);
@@ -654,7 +655,7 @@ function applyStepEnd(from, to) {
 
     for (let i=0;i<3;i++) {
       let src = cytNa.find(n => !n.bound);
-      if (!src) src = { x: pumpCX(), y: memBot()+20, vx:0, vy:0, r:9 };
+      if (!src) src = { x: pumpCX(), y: memBot()+20, vx:0, vy:0, r:9, isNa: true };
       else cytNa = cytNa.filter(n => n !== src);
       src.bound = true; src.isNa = true; src.slot = i;
       boundIons.push(src);
