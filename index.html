@@ -476,7 +476,7 @@ const STEPS = [
 // ─────────────────────────────────────────────
 let canvas, ctx, W, H;
 let stepIdx = 0;
-let transitionT = 1; // 1 = at rest, 0..1 = transitioning
+let transitionT = 1; 
 let autoPlay = false;
 let autoDelay = 0;
 let autoDelayMax = 100;
@@ -486,7 +486,7 @@ let raf;
 // Protein position (centered)
 const PUMP_CX_FRAC = 0.45;
 const PUMP_W = 70;
-const MEM_THICK = 46; // half-thickness each side
+const MEM_THICK = 46; 
 
 // Ion pools
 let extNa = [], extK = [], cytNa = [], cytK = [], boundIons = [];
@@ -495,7 +495,7 @@ let extNa = [], extK = [], cytNa = [], cytK = [], boundIons = [];
 let hoverEl = null;
 let mouseX = 0, mouseY = 0;
 
-// Visual state (interpolated)
+// Visual state
 let vis = { gateBot:1, gateTop:0, twist:0, phospho:0, atpVis:0, adpVis:0, piVis:0 };
 let visTarget = { ...vis };
 
@@ -545,7 +545,6 @@ function spawnIons() {
   const rnd = (a, b) => a + Math.random() * (b - a);
   const rvec = () => ({ vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5 });
 
-  // Extracellular: many Na+, few K+
   for (let i=0;i<12;i++) {
     const side = i < 7 ? rnd(30, cx-pw-25) : rnd(cx+pw+25, W-60);
     extNa.push({ x:side, y:rnd(20, mt-15), ...rvec(), r:9, bound:false });
@@ -554,7 +553,6 @@ function spawnIons() {
     const side = i < 3 ? rnd(40, cx-pw-30) : rnd(cx+pw+30, W-70);
     extK.push({ x:side, y:rnd(25, mt-15), ...rvec(), r:9, bound:false });
   }
-  // Cytoplasm: many K+, few Na+
   for (let i=0;i<12;i++) {
     const side = i < 7 ? rnd(30, cx-pw-25) : rnd(cx+pw+25, W-60);
     cytK.push({ x:side, y:rnd(mb+15, mb+H*0.38), ...rvec(), r:9, bound:false });
@@ -564,7 +562,6 @@ function spawnIons() {
     cytNa.push({ x:side, y:rnd(mb+15, mb+H*0.38), ...rvec(), r:9, bound:false });
   }
 
-  // Pre-bind 3 Na+ (E1 state)
   const naSlots = [[-18,8],[0,-2],[18,8]];
   for (let i=0;i<3;i++) {
     boundIons.push({ x: pumpCX()+naSlots[i][0], y: memMid()+naSlots[i][1],
@@ -581,16 +578,12 @@ function loop() {
   raf = requestAnimationFrame(loop);
 }
 
-function easeInOut(t) { return t<0.5 ? 2*t*t : -1+(4-2*t)*t; }
-
 function update() {
-  // Lerp visuals
   const speed = 0.04;
   for (const k of Object.keys(vis)) {
     vis[k] += (visTarget[k] - vis[k]) * speed * 3;
   }
 
-  // Wander background ions
   const cx = pumpCX(), pw = PUMP_W;
   const mt = memTop(), mb = memBot();
 
@@ -599,7 +592,6 @@ function update() {
     ion.x += ion.vx; ion.y += ion.vy;
     if (ion.x < minX || ion.x > maxX) { ion.vx *= -1; ion.x = Math.max(minX, Math.min(maxX, ion.x)); }
     if (ion.y < minY || ion.y > maxY) { ion.vy *= -1; ion.y = Math.max(minY, Math.min(maxY, ion.y)); }
-    // Slight random drift
     if (Math.random() < 0.02) { ion.vx += (Math.random()-0.5)*0.3; ion.vy += (Math.random()-0.5)*0.3; }
     const spd = Math.hypot(ion.vx, ion.vy);
     if (spd > 0.8) { ion.vx /= spd * 1.25; ion.vy /= spd * 1.25; }
@@ -610,7 +602,6 @@ function update() {
   for (const ion of cytNa) wanderIon(ion, 20, cx-pw-20, mb+8, mb+H*0.38);
   for (const ion of cytK)  wanderIon(ion, 20, cx-pw-20, mb+8, mb+H*0.38);
 
-  // Move bound ions toward slots
   const naSlots = [[-18,8],[0,-2],[18,8]];
   const kSlots  = [[-12,-10],[12,-10]];
   for (const ion of boundIons) {
@@ -620,12 +611,10 @@ function update() {
     ion.y += (ty - ion.y) * 0.12;
   }
 
-  // Auto play
   if (autoPlay) {
     autoDelay++;
     if (autoDelay >= autoDelayMax) {
       autoDelay = 0;
-      // Verifica si la digoxina detiene el autoplay
       if (document.getElementById('chkDigoxina') && document.getElementById('chkDigoxina').checked && stepIdx === 3) {
         autoPlay = false;
         document.getElementById('btnAuto').textContent = '▶ Auto';
@@ -669,12 +658,7 @@ function setVisTarget(s) {
 }
 
 function applyStepEnd(from, to) {
-  const fromStep = STEPS[from];
-  const toStep   = STEPS[to];
-
-  // Going forward: E1P_NA3 (idx 2) → E2P (idx 3): release Na+, bind K+
   if (from === 2 && to === 3) {
-    // Release bound Na+ to extracellular
     for (const ion of [...boundIons]) {
       if (ion.isNa) {
         ion.bound = false; ion.vx = (Math.random()-0.5)*1; ion.vy = -0.8;
@@ -683,11 +667,8 @@ function applyStepEnd(from, to) {
     }
     boundIons = boundIons.filter(i => !i.isNa);
     
-    // LIMITADOR DE MEMORIA: Elimina iones viejos si hay demasiados
     while(extNa.length > 25) extNa.shift();
 
-    // Bind 2 K+ from extracellular pool (or create)
-    const kSlots = [[-12,-10],[12,-10]];
     for (let i=0;i<2;i++) {
       let src = extK.find(k => !k.bound);
       if (!src) src = { x: pumpCX(), y: memTop()-20, vx:0, vy:0, r:9 };
@@ -697,7 +678,6 @@ function applyStepEnd(from, to) {
     }
   }
 
-  // E2_K2 (idx 5) → E1 (idx 0): release K+ to cytoplasm, bind 3 Na+
   if (from === 5 && to === 0) {
     cycles++; naOut += 3; kIn += 2; atpUsed++;
     document.getElementById('statCycles').textContent = cycles;
@@ -705,7 +685,6 @@ function applyStepEnd(from, to) {
     document.getElementById('statKIn').textContent = kIn;
     document.getElementById('statATP').textContent = atpUsed;
 
-    // Release K+ to cytoplasm
     for (const ion of [...boundIons]) {
       if (!ion.isNa) {
         ion.bound = false; ion.vx = (Math.random()-0.5)*0.8; ion.vy = 0.8;
@@ -714,11 +693,8 @@ function applyStepEnd(from, to) {
     }
     boundIons = boundIons.filter(i => i.isNa);
     
-    // LIMITADOR DE MEMORIA: Elimina iones viejos si hay demasiados
     while(cytK.length > 25) cytK.shift();
 
-    // Bind 3 Na+ from cytoplasm
-    const naSlots = [[-18,8],[0,-2],[18,8]];
     for (let i=0;i<3;i++) {
       let src = cytNa.find(n => !n.bound);
       if (!src) src = { x: pumpCX(), y: memBot()+20, vx:0, vy:0, r:9 };
@@ -749,8 +725,36 @@ function render() {
   drawProtein(mt, mb, mc, cx, pw);
   drawIons();
   drawATPADP(mc, cx, pw, mb);
+  
+  // DIBUJAR DIGOXINA SI ESTÁ ACTIVADA EN EL PASO 4 (E2P)
+  if (document.getElementById('chkDigoxina') && document.getElementById('chkDigoxina').checked && stepIdx === 3) {
+    drawDigoxin(mt, cx);
+  }
+
   if (document.getElementById('chkGradient') && document.getElementById('chkGradient').checked) drawGradient(mt, mb);
   drawLabels(mt, mb, cx, pw);
+}
+
+// NUEVA FUNCIÓN: Dibujar molécula de Digoxina
+function drawDigoxin(mt, cx) {
+  const dx = cx;
+  const dy = mt - 28; // Justo en la apertura extracelular de la bomba
+
+  // Forma representativa (píldora bloqueadora)
+  ctx.fillStyle = '#c03010';
+  roundRect(ctx, dx - 35, dy - 10, 70, 20, 10);
+  ctx.fill();
+  
+  ctx.strokeStyle = '#5a1000';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Texto
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 9px DM Sans';
+  ctx.textAlign = 'center';
+  ctx.fillText('🛑 DIGOXINA', dx, dy + 3);
+  ctx.textAlign = 'left';
 }
 
 function drawMembrane(mt, mb, mc, cx, pw) {
